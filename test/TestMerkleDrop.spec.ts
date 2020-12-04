@@ -71,10 +71,7 @@ contract('MerkleDrop', accounts => {
     token = await TToken.new('TToken', 'TKN', DECIMALS)
 
     // Deploy MerkleDrop
-    merkleDrop = await MerkleDrop.new()
-
-    // Initialize MerkleDrop
-    await merkleDrop.initialize(funder, [funder], token.address)
+    merkleDrop = await MerkleDrop.new(token.address)
 
     // Mint TToken (large amount)
     const amount = exactAmount('100000000')

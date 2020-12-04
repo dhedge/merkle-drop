@@ -5,11 +5,9 @@ import { MerkleProof } from "@openzeppelin/contracts/cryptography/MerkleProof.so
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Ownable } from "@openzeppelin/contracts/ownership/Ownable.sol";
 
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
-import { InitializableGovernableWhitelist } from "@mstable/protocol/contracts/governance/InitializableGovernableWhitelist.sol";
-
-contract MerkleDrop is Initializable, InitializableGovernableWhitelist {
+contract MerkleDrop is Ownable {
 
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -17,7 +15,6 @@ contract MerkleDrop is Initializable, InitializableGovernableWhitelist {
     event Claimed(address claimant, uint256 week, uint256 balance);
     event TrancheAdded(uint256 tranche, bytes32 merkleRoot, uint256 totalAmount);
     event TrancheExpired(uint256 tranche);
-    event RemovedFunder(address indexed _address);
 
     IERC20 public token;
 
@@ -25,15 +22,11 @@ contract MerkleDrop is Initializable, InitializableGovernableWhitelist {
     mapping(uint256 => mapping(address => bool)) public claimed;
     uint256 tranches;
 
-    function initialize(
-        address _nexus,
-        address[] calldata _funders,
+    constructor(
         IERC20 _token
     )
-        external
-        initializer
+        public
     {
-        InitializableGovernableWhitelist._initialize(_nexus, _funders);
         token = _token;
     }
 
@@ -43,8 +36,8 @@ contract MerkleDrop is Initializable, InitializableGovernableWhitelist {
 
     function seedNewAllocations(bytes32 _merkleRoot, uint256 _totalAllocation)
         public
-        onlyWhitelisted
-        returns (uint256 trancheId)
+        onlyOwner
+    returns (uint256 trancheId)
     {
         token.safeTransferFrom(msg.sender, address(this), _totalAllocation);
 
@@ -58,38 +51,11 @@ contract MerkleDrop is Initializable, InitializableGovernableWhitelist {
 
     function expireTranche(uint256 _trancheId)
         public
-        onlyWhitelisted
+        onlyOwner
     {
         merkleRoots[_trancheId] = bytes32(0);
 
         emit TrancheExpired(_trancheId);
-    }
-
-    /**
-     * @dev Allows the mStable governance to add a new Funder
-     * @param _address  Funder to add
-     */
-    function addFunder(address _address)
-        external
-        onlyGovernor
-    {
-        _addWhitelist(_address);
-    }
-
-    /**
-     * @dev Allows the mStable governance to remove inactive Funder
-     * @param _address  Funder to remove
-     */
-    function removeFunder(address _address)
-        external
-        onlyGovernor
-    {
-        require(_address != address(0), "Address is zero");
-        require(whitelist[_address], "Address is not whitelisted");
-
-        whitelist[_address] = false;
-
-        emit RemovedFunder(_address);
     }
 
 
