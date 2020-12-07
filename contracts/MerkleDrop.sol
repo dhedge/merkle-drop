@@ -58,6 +58,12 @@ contract MerkleDrop is Ownable {
         emit TrancheExpired(_trancheId);
     }
 
+    function adminWithdraw(uint256 _amount)
+        public
+        onlyOwner
+    {
+        token.safeTransfer(msg.sender, _amount);
+    }
 
     /***************************************
                   CLAIMING
