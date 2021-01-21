@@ -20,7 +20,7 @@ contract MerkleDrop is Ownable {
 
     mapping(uint256 => bytes32) public merkleRoots;
     mapping(uint256 => mapping(address => bool)) public claimed;
-    uint256 tranches;
+    uint256 public tranches;
 
     constructor(
         IERC20 _token
